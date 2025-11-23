@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Palette Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .color-card:hover .copy-overlay {
+      opacity: 1;
+    }
+
+    .color-card {
+      transition: transform 0.2s ease;
+    }
+
+    .color-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .saved-palette-card:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+        <h1 class="text-xl font-bold text-gray-900">Simple Palette</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="relative hidden sm:block">
+          <select id="harmony-select" onchange="generatePalette()"
+            class="appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm">
+            <option value="random">Random Harmony</option>
+            <option value="analogous">Analogous</option>
+            <option value="complementary">Complementary</option>
+            <option value="split-complementary">Split Complementary</option>
+            <option value="triadic">Triadic</option>
+            <option value="tetradic">Tetradic</option>
+            <option value="monochromatic">Monochromatic</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </div>
+        </div>
+        <button onclick="generatePalette()"
+          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+          <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v3.268a2 2 0 01-.001 4.148l-.355-.144A2 2 0 0116.015 17h-2.008a2 2 0 01.015-.599 7.001 7.001 0 01-10.416-4.667 1 1 0 01.61-1.277z"
+              clip-rule="evenodd" />
+          </svg>
+          Generate
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full flex flex-col">
+
+    <div class="mb-10 text-center">
+      <h2 class="text-3xl font-extrabold text-gray-900 mb-4">Your Curated Palette</h2>
+      <div id="harmony-badge"
+        class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+        Random
+      </div>
+    </div>
+
+    <!-- Palette Container -->
+    <div id="palette-container"
+      class="bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row h-[400px] md:h-80 w-full">
+      <!-- Colors injected here -->
+    </div>
+
+    <!-- Action Bar -->
+    <div class="mt-8 flex flex-wrap justify-center gap-4">
+      <button onclick="copyAllHex()"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Copy All HEX
+      </button>
+      <button onclick="copyTailwindConfig()"
+        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+        Copy Tailwind Config
+      </button>
+      <button onclick="savePalette()"
+        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        </svg>
+        Save Palette
+      </button>
+    </div>
+
+    <!-- Saved Palettes Section -->
+    <div id="saved-section" class="mt-20 pt-10 border-t border-gray-200 hidden">
+      <div class="flex items-center justify-between mb-8">
+        <h3 class="text-2xl font-bold text-gray-900">Saved Collections</h3>
+        <button onclick="clearAllSaved()" class="text-sm text-red-600 hover:text-red-800 font-medium">Clear All</button>
+      </div>
+      <div id="saved-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Saved items injected here -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-gray-200 mt-auto">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <p class="text-center text-gray-400 text-sm">Simple 4-color palettes generated with color theory.</p>
+    </div>
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast"
+    class="fixed bottom-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-md shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2 z-50">
+    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="toast-message">Copied!</span>
+  </div>
+
+  <script>
+    // Tailwind Standard Colors (v3) for matching
+    const TAILWIND_COLORS = {
+      'slate-50': '#f8fafc', 'slate-100': '#f1f5f9', 'slate-200': '#e2e8f0', 'slate-300': '#cbd5e1', 'slate-400': '#94a3b8', 'slate-500': '#64748b', 'slate-600': '#475569', 'slate-700': '#334155', 'slate-800': '#1e293b', 'slate-900': '#0f172a', 'slate-950': '#020617',
+      'gray-50': '#f9fafb', 'gray-100': '#f3f4f6', 'gray-200': '#e5e7eb', 'gray-300': '#d1d5db', 'gray-400': '#9ca3af', 'gray-500': '#6b7280', 'gray-600': '#4b5563', 'gray-700': '#374151', 'gray-800': '#1f2937', 'gray-900': '#111827', 'gray-950': '#030712',
+      'zinc-50': '#fafafa', 'zinc-100': '#f4f4f5', 'zinc-200': '#e4e4e7', 'zinc-300': '#d4d4d8', 'zinc-400': '#a1a1aa', 'zinc-500': '#71717a', 'zinc-600': '#52525b', 'zinc-700': '#3f3f46', 'zinc-800': '#27272a', 'zinc-900': '#18181b', 'zinc-950': '#09090b',
+      'neutral-50': '#fafafa', 'neutral-100': '#f5f5f5', 'neutral-200': '#e5e5e5', 'neutral-300': '#d4d4d4', 'neutral-400': '#a3a3a3', 'neutral-500': '#737373', 'neutral-600': '#525252', 'neutral-700': '#404040', 'neutral-800': '#262626', 'neutral-900': '#171717', 'neutral-950': '#0a0a0a',
+      'stone-50': '#fafaf9', 'stone-100': '#f5f5f4', 'stone-200': '#e7e5e4', 'stone-300': '#d6d3d1', 'stone-400': '#a8a29e', 'stone-500': '#78716c', 'stone-600': '#57534e', 'stone-700': '#44403c', 'stone-800': '#292524', 'stone-900': '#1c1917', 'stone-950': '#0c0a09',
+      'red-50': '#fef2f2', 'red-100': '#fee2e2', 'red-200': '#fecaca', 'red-300': '#fca5a5', 'red-400': '#f87171', 'red-500': '#ef4444', 'red-600': '#dc2626', 'red-700': '#b91c1c', 'red-800': '#991b1b', 'red-900': '#7f1d1d', 'red-950': '#450a0a',
+      'orange-50': '#fff7ed', 'orange-100': '#ffedd5', 'orange-200': '#fed7aa', 'orange-300': '#fdba74', 'orange-400': '#fb923c', 'orange-500': '#f97316', 'orange-600': '#ea580c', 'orange-700': '#c2410c', 'orange-800': '#9a3412', 'orange-900': '#7c2d12', 'orange-950': '#431407',
+      'amber-50': '#fffbeb', 'amber-100': '#fef3c7', 'amber-200': '#fde68a', 'amber-300': '#fcd34d', 'amber-400': '#fbbf24', 'amber-500': '#f59e0b', 'amber-600': '#d97706', 'amber-700': '#b45309', 'amber-800': '#92400e', 'amber-900': '#78350f', 'amber-950': '#451a03',
+      'yellow-50': '#fefce8', 'yellow-100': '#fef9c3', 'yellow-200': '#fef08a', 'yellow-300': '#fde047', 'yellow-400': '#facc15', 'yellow-500': '#eab308', 'yellow-600': '#ca8a04', 'yellow-700': '#a16207', 'yellow-800': '#854d0e', 'yellow-900': '#713f12', 'yellow-950': '#422006',
+      'lime-50': '#f7fee7', 'lime-100': '#ecfccb', 'lime-200': '#d9f99d', 'lime-300': '#bef264', 'lime-400': '#a3e635', 'lime-500': '#84cc16', 'lime-600': '#65a30d', 'lime-700': '#4d7c0f', 'lime-800': '#3f6212', 'lime-900': '#365314', 'lime-950': '#1a2e05',
+      'green-50': '#f0fdf4', 'green-100': '#dcfce7', 'green-200': '#bbf7d0', 'green-300': '#86efac', 'green-400': '#4ade80', 'green-500': '#22c55e', 'green-600': '#16a34a', 'green-700': '#15803d', 'green-800': '#166534', 'green-900': '#14532d', 'green-950': '#052e16',
+      'emerald-50': '#ecfdf5', 'emerald-100': '#d1fae5', 'emerald-200': '#a7f3d0', 'emerald-300': '#6ee7b7', 'emerald-400': '#34d399', 'emerald-500': '#10b981', 'emerald-600': '#059669', 'emerald-700': '#047857', 'emerald-800': '#065f46', 'emerald-900': '#064e3b', 'emerald-950': '#022c22',
+      'teal-50': '#f0fdfa', 'teal-100': '#ccfbf1', 'teal-200': '#99f6e4', 'teal-300': '#5eead4', 'teal-400': '#2dd4bf', 'teal-500': '#14b8a6', 'teal-600': '#0d9488', 'teal-700': '#0f766e', 'teal-800': '#115e59', 'teal-900': '#134e4a', 'teal-950': '#042f2e',
+      'cyan-50': '#ecfeff', 'cyan-100': '#cffafe', 'cyan-200': '#a5f3fc', 'cyan-300': '#67e8f9', 'cyan-400': '#22d3ee', 'cyan-500': '#06b6d4', 'cyan-600': '#0891b2', 'cyan-700': '#0e7490', 'cyan-800': '#155f75', 'cyan-900': '#164e63', 'cyan-950': '#083344',
+      'sky-50': '#f0f9ff', 'sky-100': '#e0f2fe', 'sky-200': '#bae6fd', 'sky-300': '#7dd3fc', 'sky-400': '#38bdf8', 'sky-500': '#0ea5e9', 'sky-600': '#0284c7', 'sky-700': '#0369a1', 'sky-800': '#075985', 'sky-900': '#0c4a6e', 'sky-950': '#082f49',
+      'blue-50': '#eff6ff', 'blue-100': '#dbeafe', 'blue-200': '#bfdbfe', 'blue-300': '#93c5fd', 'blue-400': '#60a5fa', 'blue-500': '#3b82f6', 'blue-600': '#2563eb', 'blue-700': '#1d4ed8', 'blue-800': '#1e40af', 'blue-900': '#1e3a8a', 'blue-950': '#172554',
+      'indigo-50': '#eef2ff', 'indigo-100': '#e0e7ff', 'indigo-200': '#c7d2fe', 'indigo-300': '#a5b4fc', 'indigo-400': '#818cf8', 'indigo-500': '#6366f1', 'indigo-600': '#4f46e5', 'indigo-700': '#4338ca', 'indigo-800': '#3730a3', 'indigo-900': '#312e81', 'indigo-950': '#1e1b4b',
+      'violet-50': '#f5f3ff', 'violet-100': '#ede9fe', 'violet-200': '#ddd6fe', 'violet-300': '#c4b5fd', 'violet-400': '#a78bfa', 'violet-500': '#8b5cf6', 'violet-600': '#7c3aed', 'violet-700': '#6d28d9', 'violet-800': '#5b21b6', 'violet-900': '#4c1d95', 'violet-950': '#2e1065',
+      'purple-50': '#faf5ff', 'purple-100': '#f3e8ff', 'purple-200': '#e9d5ff', 'purple-300': '#d8b4fe', 'purple-400': '#c084fc', 'purple-500': '#a855f7', 'purple-600': '#9333ea', 'purple-700': '#7e22ce', 'purple-800': '#6b21a8', 'purple-900': '#581c87', 'purple-950': '#3b0764',
+      'fuchsia-50': '#fdf4ff', 'fuchsia-100': '#fae8ff', 'fuchsia-200': '#f5d0fe', 'fuchsia-300': '#f0abfc', 'fuchsia-400': '#e879f9', 'fuchsia-500': '#d946ef', 'fuchsia-600': '#c026d3', 'fuchsia-700': '#a21caf', 'fuchsia-800': '#86198f', 'fuchsia-900': '#701a75', 'fuchsia-950': '#4a044e',
+      'pink-50': '#fdf2f8', 'pink-100': '#fce7f3', 'pink-200': '#fbcfe8', 'pink-300': '#f9a8d4', 'pink-400': '#f472b6', 'pink-500': '#ec4899', 'pink-600': '#db2777', 'pink-700': '#be185d', 'pink-800': '#9d174d', 'pink-900': '#831843', 'pink-950': '#500724',
+      'rose-50': '#fff1f2', 'rose-100': '#ffe4e6', 'rose-200': '#fecdd3', 'rose-300': '#fda4af', 'rose-400': '#fb7185', 'rose-500': '#f43f5e', 'rose-600': '#e11d48', 'rose-700': '#be123c', 'rose-800': '#9f1239', 'rose-900': '#881337', 'rose-950': '#4c0519',
+    };
+
+    // State
+    let currentPalette = [];
+    let savedPalettes = [];
+
+    // Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('palette_generator_saved');
+      if (saved) {
+        try {
+          savedPalettes = JSON.parse(saved);
+          renderSavedPalettes();
+        } catch (e) {
+          console.error('Error loading saved palettes', e);
+        }
+      }
+      generatePalette();
+    });
+
+    // Utility functions
+    function hslToHex(h, s, l) {
+      l /= 100;
+      const a = s * Math.min(l, 1 - l) / 100;
+      const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    }
+
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return { r, g, b };
+    }
+
+    function getNearestTailwindColor(hex) {
+      const { r: r1, g: g1, b: b1 } = hexToRgb(hex);
+      let minDistance = Infinity;
+      let nearestColor = '';
+
+      for (const [name, colorHex] of Object.entries(TAILWIND_COLORS)) {
+        const { r: r2, g: g2, b: b2 } = hexToRgb(colorHex);
+        // Euclidean distance (simple but effective for this)
+        const distance = Math.sqrt(
+          Math.pow(r2 - r1, 2) +
+          Math.pow(g2 - g1, 2) +
+          Math.pow(b2 - b1, 2)
+        );
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestColor = name;
+        }
+      }
+      return nearestColor;
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    const HARMONIES = {
+      'analogous': (h) => [h, (h + 30) % 360, (h - 30 + 360) % 360],
+      'complementary': (h) => [h, (h + 180) % 360],
+      'split-complementary': (h) => [h, (h + 150) % 360, (h + 210) % 360],
+      'triadic': (h) => [h, (h + 120) % 360, (h + 240) % 360],
+      'tetradic': (h) => [h, (h + 90) % 360, (h + 180) % 360, (h + 270) % 360],
+      'monochromatic': (h) => [h]
+    };
+
+    function generatePalette() {
+      const container = document.getElementById('palette-container');
+      const harmonySelect = document.getElementById('harmony-select');
+      const harmonyBadge = document.getElementById('harmony-badge');
+      container.innerHTML = '';
+      currentPalette = [];
+
+      let selectedHarmony = harmonySelect.value;
+      const harmonyKeys = Object.keys(HARMONIES);
+
+      if (selectedHarmony === 'random') {
+        selectedHarmony = harmonyKeys[getRandomInt(0, harmonyKeys.length - 1)];
+      }
+
+      harmonyBadge.textContent = selectedHarmony.replace(/-/g, ' ').toUpperCase();
+
+      const baseHue = getRandomInt(0, 360);
+      const baseSat = getRandomInt(60, 90);
+
+      let hues = HARMONIES[selectedHarmony](baseHue);
+      let colorDefs = [];
+
+      // 1. Primary
+      colorDefs.push({ role: 'Primary', h: hues[0], s: baseSat, l: getRandomInt(45, 55) });
+
+      // 2. Secondary & 3. Accent
+      if (selectedHarmony === 'monochromatic') {
+        colorDefs.push({ role: 'Secondary', h: hues[0], s: baseSat - 20, l: getRandomInt(30, 40) });
+        colorDefs.push({ role: 'Accent', h: hues[0], s: baseSat, l: getRandomInt(85, 95) });
+      } else if (selectedHarmony === 'complementary') {
+        colorDefs.push({ role: 'Secondary', h: hues[1], s: baseSat, l: getRandomInt(45, 60) });
+        colorDefs.push({ role: 'Accent', h: hues[0], s: Math.max(0, baseSat - 10), l: getRandomInt(80, 90) });
+      } else {
+        let secHue = hues[1] !== undefined ? hues[1] : hues[0];
+        let accHue = hues[2] !== undefined ? hues[2] : (hues[1] !== undefined ? hues[1] : hues[0]);
+        colorDefs.push({ role: 'Secondary', h: secHue, s: Math.max(10, baseSat - 10), l: getRandomInt(50, 65) });
+        colorDefs.push({ role: 'Accent', h: accHue, s: baseSat, l: getRandomInt(45, 60) });
+      }
+
+      // 4. Neutral
+      colorDefs.push({ role: 'Neutral', h: baseHue, s: getRandomInt(5, 15), l: 96 });
+
+      colorDefs.forEach(def => {
+        const hex = hslToHex(def.h, def.s, def.l);
+        const textColor = def.l > 60 ? 'text-gray-900' : 'text-white';
+        const nearestTailwind = getNearestTailwindColor(hex);
+
+        currentPalette.push({
+          role: def.role,
+          hex: hex,
+          textColor: textColor,
+          tailwindClass: nearestTailwind
+        });
+      });
+
+      renderMainPalette(currentPalette);
+    }
+
+    function renderMainPalette(palette) {
+      const container = document.getElementById('palette-container');
+      container.innerHTML = '';
+
+      palette.forEach((color) => {
+        const colDiv = document.createElement('div');
+        colDiv.className = `color-card relative flex-1 flex flex-col justify-center items-center p-4 cursor-pointer group ${color.textColor}`;
+        colDiv.style.backgroundColor = color.hex;
+        colDiv.onclick = () => copyToClipboard(color.hex);
+
+        colDiv.innerHTML = `
+                    <div class="text-center z-10">
+                        <p class="text-xs font-bold tracking-widest uppercase opacity-60 mb-1">${color.role}</p>
+                        <p class="text-xl font-mono font-bold select-all mb-2">${color.hex}</p>
+                        <div class="inline-block px-2 py-1 rounded bg-black/10 text-xs font-mono opacity-80" title="Nearest Standard Tailwind Color">
+                            ${color.tailwindClass}
+                        </div>
+                    </div>
+                    <div class="copy-overlay opacity-0 absolute inset-0 bg-black/10 flex items-center justify-center transition-opacity duration-200">
+                        <span class="bg-white text-gray-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm uppercase tracking-wide">Copy Hex</span>
+                    </div>
+                `;
+        container.appendChild(colDiv);
+      });
+    }
+
+    function savePalette() {
+      const harmony = document.getElementById('harmony-badge').textContent;
+      const newSave = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        harmony: harmony,
+        colors: currentPalette
+      };
+
+      savedPalettes.unshift(newSave);
+      saveToStorage();
+      renderSavedPalettes();
+      showToast('Palette Saved');
+
+      // Scroll to saved section if it was hidden (first save)
+      const section = document.getElementById('saved-section');
+      if (section.classList.contains('hidden')) {
+        section.classList.remove('hidden');
+        section.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function deleteSaved(id) {
+      savedPalettes = savedPalettes.filter(p => p.id !== id);
+      saveToStorage();
+      renderSavedPalettes();
+    }
+
+    function clearAllSaved() {
+      if (confirm('Are you sure you want to clear all saved palettes?')) {
+        savedPalettes = [];
+        saveToStorage();
+        renderSavedPalettes();
+      }
+    }
+
+    function restorePalette(id) {
+      const palette = savedPalettes.find(p => p.id === id);
+      if (palette) {
+        currentPalette = palette.colors;
+        document.getElementById('harmony-badge').textContent = palette.harmony;
+        renderMainPalette(palette.colors);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast('Palette Restored');
+      }
+    }
+
+    function renderSavedPalettes() {
+      const section = document.getElementById('saved-section');
+      const container = document.getElementById('saved-container');
+      container.innerHTML = '';
+
+      if (savedPalettes.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+
+      savedPalettes.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'saved-palette-card bg-white rounded-lg shadow border border-gray-100 overflow-hidden transition-all duration-200';
+
+        // Mini preview
+        const preview = document.createElement('div');
+        preview.className = 'h-24 flex cursor-pointer';
+        preview.onclick = () => restorePalette(p.id);
+
+        p.colors.forEach(c => {
+          const strip = document.createElement('div');
+          strip.className = 'flex-1 h-full';
+          strip.style.backgroundColor = c.hex;
+          preview.appendChild(strip);
+        });
+
+        // Footer info
+        const footer = document.createElement('div');
+        footer.className = 'px-4 py-3 flex items-center justify-between bg-gray-50';
+
+        const info = document.createElement('div');
+        info.innerHTML = `
+                    <p class="text-xs font-bold text-gray-700 uppercase tracking-wide">${p.harmony}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">${new Date(p.timestamp).toLocaleDateString()}</p>
+                `;
+
+        const actions = document.createElement('div');
+        actions.className = 'flex gap-2';
+
+        // Delete button
+        const delBtn = document.createElement('button');
+        delBtn.className = 'text-gray-400 hover:text-red-500 p-1';
+        delBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+        delBtn.onclick = (e) => { e.stopPropagation(); deleteSaved(p.id); };
+
+        actions.appendChild(delBtn);
+
+        footer.appendChild(info);
+        footer.appendChild(actions);
+        card.appendChild(preview);
+        card.appendChild(footer);
+
+        container.appendChild(card);
+      });
+    }
+
+    function saveToStorage() {
+      localStorage.setItem('palette_generator_saved', JSON.stringify(savedPalettes));
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`Copied ${text}`);
+      });
+    }
+
+    function copyAllHex() {
+      const hexes = currentPalette.map(c => c.hex).join(', ');
+      copyToClipboard(hexes);
+    }
+
+    function copyTailwindConfig() {
+      const config =
+        `colors: {
+    primary: '${currentPalette[0].hex}', // ~ ${currentPalette[0].tailwindClass}
+    secondary: '${currentPalette[1].hex}', // ~ ${currentPalette[1].tailwindClass}
+    accent: '${currentPalette[2].hex}', // ~ ${currentPalette[2].tailwindClass}
+    neutral: '${currentPalette[3].hex}', // ~ ${currentPalette[3].tailwindClass}
+}`;
+      copyToClipboard(config);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toast-message');
+      msg.innerText = message;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 2000);
+    }
+  </script>
+</body>
+
+</html>
