@@ -4,4 +4,7 @@ This project helps you create color palettes from [Tailwind colors]('https://tai
 
 Each palette you save will be stored in localstorage.
 
-Open `index.html` in a browser to use.
+## Usage
+
+1. Git clone this repo or download `index.html`
+2. Open `index.html` in a browser
